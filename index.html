@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXA · AI Automation Society</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/simplex-noise@2.4.0/simplex-noise.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --blue:        #0B90FF;
+      --blue-bright: #1AADFF;
+      --blue-glow:   rgba(11,144,255,0.45);
+      --orange:      #FF6B00;
+      --bg:          #04070E;
+      --surface:     #080D1A;
+      --elevated:    #0D1424;
+      --card:        #0F1828;
+      --border:      rgba(11,144,255,0.10);
+      --border-mid:  rgba(11,144,255,0.22);
+      --grey:        #7B8299;
+      --grey-light:  #A8B0C4;
+      --white:       #F0F4FF;
+      --green:       #3DFD98;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Roboto Mono', monospace;
+      background: var(--bg);
+      color: var(--white);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: rgba(11,144,255,0.3); border-radius: 2px; }
+
+    /* ── Backgrounds ── */
+    .dot-grid {
+      background-image: radial-gradient(circle, rgba(11,144,255,0.15) 1px, transparent 1px);
+      background-size: 38px 38px;
+    }
+    .line-grid {
+      background-image:
+        linear-gradient(rgba(11,144,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(11,144,255,0.03) 1px, transparent 1px);
+      background-size: 64px 64px;
+    }
+
+    /* ── Navigation ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      background: rgba(4,7,14,0.88);
+      border-bottom: 1px solid rgba(11,144,255,0.07);
+    }
+    .nav-inner {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 0 32px;
+      height: 66px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo-block { display: flex; align-items: center; gap: 14px; }
+    .logo-community {
+      font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--grey); font-weight: 400; line-height: 1;
+      border-left: 1px solid rgba(11,144,255,0.2);
+      padding-left: 14px; margin-left: 0;
+    }
+    .logo-img {
+      height: 34px;
+      filter: drop-shadow(0 0 14px rgba(11,144,255,1)) drop-shadow(0 0 32px rgba(11,144,255,0.55)) drop-shadow(0 0 4px rgba(255,255,255,0.7)) brightness(1.05);
+    }
+    .nav-links { display: flex; align-items: center; gap: 34px; list-style: none; }
+    .nav-links a {
+      font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--grey); text-decoration: none; font-weight: 400;
+      transition: color 0.2s ease; position: relative;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: -3px; left: 0; right: 0;
+      height: 1px; background: var(--blue);
+      transform: scaleX(0); transition: transform 0.2s ease; transform-origin: left;
+    }
+    .nav-links a:hover { color: var(--white); }
+    .nav-links a:hover::after { transform: scaleX(1); }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--blue); color: #fff; border: none;
+      padding: 11px 26px; border-radius: 50px;
+      font-family: 'Roboto Mono', monospace; font-size: 12px; font-weight: 500;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      cursor: pointer; text-decoration: none;
+      transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s ease, background 0.2s ease;
+    }
+    .btn-primary:hover {
+      background: var(--blue-bright); transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(11,144,255,0.55), 0 0 0 1px rgba(11,144,255,0.3);
+    }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: transparent; color: var(--blue); border: 1px solid var(--blue);
+      padding: 11px 26px; border-radius: 50px;
+      font-family: 'Roboto Mono', monospace; font-size: 12px; font-weight: 400;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      cursor: pointer; text-decoration: none;
+      transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), background 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn-outline:hover {
+      background: rgba(11,144,255,0.08); transform: translateY(-2px);
+      box-shadow: 0 0 24px rgba(11,144,255,0.2), 0 4px 16px rgba(0,0,0,0.2);
+    }
+    .btn-outline:active { transform: translateY(0); }
+
+    .btn-text {
+      display: inline-flex; align-items: center; gap: 7px;
+      color: var(--blue-bright); font-size: 12px; font-weight: 400;
+      text-decoration: none; transition: color 0.2s ease;
+      letter-spacing: 0.04em;
+    }
+    .btn-text:hover { color: var(--white); }
+    .btn-nav { padding: 8px 20px; font-size: 10px; }
+
+    /* ── Badge ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 5px 15px; border-radius: 50px;
+      border: 1px solid rgba(11,144,255,0.28);
+      background: rgba(11,144,255,0.06);
+      font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--blue-bright); font-weight: 400;
+    }
+    .badge-dot {
+      width: 5px; height: 5px; border-radius: 50%; background: var(--blue);
+      animation: pulse-dot 2.2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--blue); }
+      50%       { opacity: 0.5; box-shadow: 0 0 10px var(--blue); }
+    }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 66px;
+      overflow: hidden;
+    }
+    .hero-bg {
+      background:
+        radial-gradient(ellipse 85% 65% at 50% -5%, rgba(11,144,255,0.13) 0%, transparent 65%),
+        radial-gradient(ellipse 45% 40% at 80% 75%, rgba(255,107,0,0.05) 0%, transparent 55%),
+        var(--bg);
+    }
+    .hero-text {
+      position: relative; z-index: 2;
+      text-align: center;
+      padding: 88px 32px 0;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .hero-text::before {
+      content: '';
+      position: absolute;
+      inset: -60px -80px;
+      background: radial-gradient(ellipse 80% 80% at 50% 45%, rgba(4,7,14,0.72) 25%, transparent 72%);
+      z-index: -1;
+      pointer-events: none;
+    }
+    .hero-headline {
+      font-size: clamp(2.8rem, 6.5vw, 5.2rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.07;
+      margin-bottom: 24px;
+    }
+    .hero-headline .accent {
+      color: var(--blue);
+      text-shadow: 0 0 60px rgba(11,144,255,0.65), 0 0 20px rgba(11,144,255,0.4);
+    }
+    .hero-sub {
+      font-size: clamp(0.87rem, 1.6vw, 1.02rem);
+      color: var(--grey-light);
+      max-width: 500px;
+      margin: 0 auto 38px;
+      line-height: 1.8;
+      font-weight: 300;
+    }
+
+    /* hero mockup */
+    .hero-mockup-wrap {
+      position: relative; z-index: 2;
+      width: 100%; max-width: 1000px;
+      margin: 56px auto 0;
+      padding: 0 20px;
+    }
+    .hero-ellipse {
+      position: absolute;
+      bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 90%; height: 260px;
+      background: radial-gradient(ellipse 100% 100% at 50% 100%,
+        rgba(11,144,255,0.28) 0%,
+        rgba(11,144,255,0.1) 40%,
+        transparent 68%);
+      pointer-events: none; z-index: 1;
+    }
+    .hero-fade {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 240px;
+      background: linear-gradient(to bottom, transparent, var(--bg));
+      pointer-events: none; z-index: 3;
+    }
+
+    /* ── Dashboard Mockup ── */
+    .mockup {
+      background: var(--card);
+      border: 1px solid rgba(11,144,255,0.28);
+      border-radius: 14px; overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(11,144,255,0.1),
+        0 0 120px rgba(11,144,255,0.2),
+        0 0 40px rgba(11,144,255,0.12),
+        0 80px 160px rgba(0,0,0,0.8);
+    }
+    .mockup-bar {
+      background: rgba(13,20,36,0.95);
+      border-bottom: 1px solid rgba(11,144,255,0.1);
+      padding: 11px 18px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .m-dots { display: flex; gap: 6px; }
+    .m-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .m-tab {
+      font-size: 10px; color: var(--grey);
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 3px 12px; border-radius: 4px;
+      border: 1px solid rgba(11,144,255,0.08);
+      background: rgba(11,144,255,0.03);
+    }
+    .m-tab.active {
+      color: var(--blue-bright);
+      border-color: rgba(11,144,255,0.3);
+      background: rgba(11,144,255,0.08);
+    }
+    .mockup-body {
+      padding: 18px;
+      display: grid;
+      grid-template-columns: 190px 1fr;
+      gap: 14px;
+      min-height: 280px;
+    }
+    .m-sidebar { display: flex; flex-direction: column; gap: 3px; }
+    .m-nav {
+      padding: 7px 11px; border-radius: 5px;
+      font-size: 9px; color: var(--grey);
+      letter-spacing: 0.08em; display: flex; align-items: center; gap: 7px;
+    }
+    .m-nav.active {
+      background: rgba(11,144,255,0.1); color: var(--blue-bright);
+      border: 1px solid rgba(11,144,255,0.15);
+    }
+    .m-dot-sm { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0.6; }
+    .m-main { display: flex; flex-direction: column; gap: 11px; }
+    .m-metrics { display: grid; grid-template-columns: repeat(3,1fr); gap: 9px; }
+    .m-metric {
+      background: var(--elevated); border: 1px solid rgba(11,144,255,0.1);
+      border-radius: 7px; padding: 11px;
+    }
+    .m-label { font-size: 7px; color: var(--grey); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 5px; }
+    .m-val { font-size: 1.1rem; font-weight: 700; color: var(--blue); letter-spacing: -0.02em; text-shadow: 0 0 18px rgba(11,144,255,0.4); }
+    .m-delta { font-size: 7px; color: var(--green); margin-top: 3px; }
+    .m-chart {
+      background: var(--elevated); border: 1px solid rgba(11,144,255,0.07);
+      border-radius: 7px; padding: 12px; overflow: hidden;
+    }
+    .m-rows { display: flex; flex-direction: column; gap: 6px; }
+    .m-row {
+      background: var(--elevated); border: 1px solid rgba(11,144,255,0.06);
+      border-radius: 5px; padding: 7px 11px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .m-row-label { font-size: 8px; color: var(--grey-light); letter-spacing: 0.05em; }
+    .m-pill {
+      font-size: 7px; padding: 2px 8px; border-radius: 50px;
+      background: rgba(11,144,255,0.1); color: var(--blue-bright);
+      border: 1px solid rgba(11,144,255,0.2);
+    }
+    .m-pill.green { background: rgba(61,253,152,0.1); color: var(--green); border-color: rgba(61,253,152,0.2); }
+    .m-pill.orange { background: rgba(255,107,0,0.1); color: #FF8C33; border-color: rgba(255,107,0,0.2); }
+
+    /* ── Layout ── */
+    .section { padding: 100px 0; }
+    .container { max-width: 1160px; margin: 0 auto; padding: 0 32px; }
+    .section-title {
+      font-size: clamp(1.75rem, 3.3vw, 2.65rem);
+      font-weight: 700; letter-spacing: -0.03em; line-height: 1.14;
+      margin: 14px 0 16px;
+    }
+    .section-sub {
+      font-size: 13px; color: var(--grey-light); max-width: 440px;
+      margin: 0 auto; line-height: 1.8; font-weight: 300;
+    }
+    .ambient {
+      position: absolute; border-radius: 50%; pointer-events: none;
+    }
+
+    /* ── Check list ── */
+    .check-item { display: flex; gap: 13px; align-items: flex-start; }
+    .check-icon {
+      width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0;
+      border: 1px solid rgba(11,144,255,0.25); background: rgba(11,144,255,0.07);
+      display: flex; align-items: center; justify-content: center; margin-top: 2px;
+    }
+
+    /* ── Steps ── */
+    .step-item { display: flex; gap: 20px; }
+    .step-num {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      border: 1px solid rgba(11,144,255,0.3); background: rgba(11,144,255,0.07);
+      color: var(--blue); display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 600; margin-top: 2px;
+    }
+
+    /* ── Profile Cards ── */
+    .profile-card {
+      background: var(--card); border: 1px solid rgba(11,144,255,0.12);
+      border-radius: 16px; padding: 40px 36px;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .profile-card:hover {
+      border-color: rgba(11,144,255,0.3);
+      box-shadow: 0 0 40px rgba(11,144,255,0.1), 0 24px 64px rgba(0,0,0,0.4);
+      transform: translateY(-4px);
+    }
+    .profile-card.featured {
+      border-color: rgba(11,144,255,0.22);
+      background: linear-gradient(145deg, rgba(11,144,255,0.07), var(--card));
+    }
+    .profile-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: rgba(11,144,255,0.1); border: 1px solid rgba(11,144,255,0.2);
+      display: flex; align-items: center; justify-content: center; margin-bottom: 24px;
+    }
+    .profile-icon.featured {
+      background: rgba(11,144,255,0.14); border-color: rgba(11,144,255,0.3);
+    }
+    .bullet-item {
+      display: flex; gap: 10px; align-items: center;
+      font-size: 12px; color: var(--grey-light); font-weight: 300;
+    }
+    .bullet-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--blue); flex-shrink: 0; }
+
+    /* ── Stats ── */
+    .stat-big {
+      font-size: clamp(3rem, 7vw, 5rem);
+      font-weight: 700; letter-spacing: -0.04em; color: var(--blue);
+      text-shadow: 0 0 60px rgba(11,144,255,0.55); line-height: 1;
+    }
+
+    /* ── FAQ ── */
+    .faq-item {
+      border-bottom: 1px solid rgba(11,144,255,0.08);
+      padding: 22px 0; cursor: pointer;
+    }
+    .faq-q {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 13.5px; font-weight: 500; color: var(--white); letter-spacing: -0.01em;
+    }
+    .faq-toggle {
+      width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+      border: 1px solid rgba(11,144,255,0.2); background: rgba(11,144,255,0.06);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--blue);
+      transition: background 0.2s ease, transform 0.3s ease;
+    }
+    .faq-item.open .faq-toggle { background: rgba(11,144,255,0.15); transform: rotate(45deg); }
+    .faq-a {
+      font-size: 12.5px; color: var(--grey-light); line-height: 1.8; font-weight: 300;
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.4s ease, padding-top 0.3s ease;
+    }
+    .faq-item.open .faq-a { max-height: 220px; padding-top: 14px; }
+
+    /* ── Divider ── */
+    .divider { height: 1px; background: linear-gradient(to right, transparent, rgba(11,144,255,0.25), transparent); }
+
+    /* ── Footer ── */
+    footer {
+      background: var(--bg);
+      border-top: 1px solid rgba(11,144,255,0.06);
+      padding: 72px 0 40px;
+    }
+    .footer-grid {
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px; margin-bottom: 56px;
+    }
+    .footer-col-title {
+      font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--white); margin-bottom: 18px; font-weight: 500;
+    }
+    .footer-links { display: flex; flex-direction: column; gap: 12px; }
+    .footer-links a {
+      font-size: 12px; color: var(--grey); text-decoration: none;
+      font-weight: 300; transition: color 0.2s ease;
+    }
+    .footer-links a:hover { color: var(--white); }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(26px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    .anim { opacity: 0; }
+    .anim.up { animation: fadeUp 0.85s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .anim.in { animation: fadeIn 0.7s ease forwards; }
+    .d1 { animation-delay: 0.05s; }
+    .d2 { animation-delay: 0.18s; }
+    .d3 { animation-delay: 0.32s; }
+    .d4 { animation-delay: 0.46s; }
+    .d5 { animation-delay: 0.60s; }
+
+    .scroll-reveal {
+      opacity: 0; transform: translateY(24px);
+      transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1);
+    }
+    .scroll-reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .nav-links, .btn-nav { display: none; }
+      .mockup-body { grid-template-columns: 1fr; }
+      .m-sidebar { display: none; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .footer-grid { grid-template-columns: 1fr; }
+      .m-metrics { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ══ NAVIGATION ══ -->
+  <nav>
+    <div class="nav-inner">
+      <div class="logo-block">
+        <img src="brand_assets/NEXA (3).png" alt="NEXA" class="logo-img">
+        <span class="logo-community">AI Automation<br>Society</span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#features">Product</a></li>
+        <li><a href="#approach">How It Works</a></li>
+        <li><a href="#community">Community</a></li>
+        <li><a href="#faq">Pricing</a></li>
+      </ul>
+      <a href="#join" class="btn-primary btn-nav">Get Started</a>
+    </div>
+  </nav>
+
+
+  <!-- ══ HERO ══ -->
+  <section class="hero hero-bg dot-grid" id="hero">
+
+    <canvas id="hero-wave-canvas" style="position:absolute;top:0;left:0;z-index:0;pointer-events:none;"></canvas>
+
+    <div class="ambient" style="width:680px;height:680px;background:radial-gradient(circle,rgba(11,144,255,0.09) 0%,transparent 65%);top:-180px;left:50%;transform:translateX(-50%);"></div>
+    <div class="ambient" style="width:320px;height:320px;background:radial-gradient(circle,rgba(255,107,0,0.05) 0%,transparent 65%);bottom:160px;right:4%;"></div>
+
+    <div class="hero-text">
+      <div class="anim in d1" style="margin-bottom:26px;">
+        <span class="badge"><span class="badge-dot"></span>NEXA · AI Automation Society</span>
+      </div>
+
+      <h1 class="hero-headline anim up d2">
+        Your <span class="accent">strategic ally</span><br>
+        for a truly scalable business
+      </h1>
+
+      <p class="hero-sub anim up d3">
+        Stop spending hours on manual work. Let AI handle the heavy lifting
+        while you focus on what actually grows your business.
+      </p>
+
+      <div class="anim up d4" style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">
+        <a href="#join" class="btn-primary">
+          Join the Community
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a href="#features" class="btn-text">
+          See how it works
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- Dashboard Mockup -->
+    <div class="hero-mockup-wrap anim in d5">
+      <div class="mockup">
+        <div class="mockup-bar">
+          <div class="m-dots">
+            <div class="m-dot" style="background:#FF5F57;"></div>
+            <div class="m-dot" style="background:#FFBD2E;"></div>
+            <div class="m-dot" style="background:#28C840;"></div>
+          </div>
+          <div class="m-tab active">Automation Dashboard</div>
+          <div class="m-tab">Workflows</div>
+          <div class="m-tab">Analytics</div>
+          <div style="margin-left:auto;font-size:8px;color:var(--grey);letter-spacing:0.1em;">NEXA v2.4</div>
+        </div>
+
+        <div class="mockup-body">
+          <!-- Sidebar -->
+          <div class="m-sidebar">
+            <div style="font-size:7px;color:var(--grey);letter-spacing:0.14em;text-transform:uppercase;padding:6px 11px 4px;">Navigation</div>
+            <div class="m-nav active"><span class="m-dot-sm"></span>Dashboard</div>
+            <div class="m-nav"><span class="m-dot-sm"></span>Workflows</div>
+            <div class="m-nav"><span class="m-dot-sm"></span>Templates</div>
+            <div class="m-nav"><span class="m-dot-sm"></span>Integrations</div>
+            <div class="m-nav"><span class="m-dot-sm"></span>Analytics</div>
+            <div class="m-nav"><span class="m-dot-sm"></span>Community</div>
+            <div style="margin-top:10px;font-size:7px;color:var(--grey);letter-spacing:0.14em;text-transform:uppercase;padding:6px 11px 4px;">Live Status</div>
+            <div style="padding:6px 11px;font-size:8px;color:var(--green);">● 12 workflows active</div>
+            <div style="padding:3px 11px;font-size:8px;color:var(--grey);">● 3 scheduled</div>
+            <div style="padding:3px 11px;font-size:8px;color:var(--grey);">● 0 errors</div>
+          </div>
+
+          <!-- Main -->
+          <div class="m-main">
+            <div class="m-metrics">
+              <div class="m-metric">
+                <div class="m-label">Time Saved</div>
+                <div class="m-val">47h</div>
+                <div class="m-delta">↑ +23% this week</div>
+              </div>
+              <div class="m-metric" style="border-color:rgba(11,144,255,0.2);">
+                <div class="m-label">Active Workflows</div>
+                <div class="m-val">12</div>
+                <div class="m-delta">↑ 3 new today</div>
+              </div>
+              <div class="m-metric">
+                <div class="m-label">Tasks Automated</div>
+                <div class="m-val">1.2K</div>
+                <div class="m-delta">↑ +8% vs last week</div>
+              </div>
+            </div>
+
+            <div class="m-chart">
+              <div class="m-label" style="margin-bottom:8px;">Automation Performance — Last 7 Days</div>
+              <svg width="100%" height="58" viewBox="0 0 400 58" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="rgba(11,144,255,0.28)"/>
+                    <stop offset="100%" stop-color="rgba(11,144,255,0)"/>
+                  </linearGradient>
+                </defs>
+                <path d="M0,50 C30,46 60,40 90,33 C115,27 135,36 160,28 C185,20 205,26 230,18 C255,10 275,14 300,9 C320,5 345,11 365,7 C380,4 400,5 400,4 L400,58 L0,58 Z" fill="url(#cg)"/>
+                <path d="M0,50 C30,46 60,40 90,33 C115,27 135,36 160,28 C185,20 205,26 230,18 C255,10 275,14 300,9 C320,5 345,11 365,7 C380,4 400,5 400,4" fill="none" stroke="rgba(11,144,255,0.85)" stroke-width="1.5"/>
+                <circle cx="90" cy="33" r="2.5" fill="var(--blue)"/>
+                <circle cx="160" cy="28" r="2.5" fill="var(--blue)"/>
+                <circle cx="230" cy="18" r="2.5" fill="var(--blue)"/>
+                <circle cx="300" cy="9"  r="2.5" fill="var(--blue)"/>
+                <circle cx="365" cy="7"  r="2.5" fill="var(--blue)"/>
+              </svg>
+            </div>
+
+            <div class="m-rows">
+              <div class="m-row">
+                <span class="m-row-label">Lead Qualification Bot</span>
+                <span class="m-pill green">Active</span>
+              </div>
+              <div class="m-row">
+                <span class="m-row-label">Email Outreach Sequence</span>
+                <span class="m-pill">Running</span>
+              </div>
+              <div class="m-row">
+                <span class="m-row-label">Invoice Generation Flow</span>
+                <span class="m-pill orange">Scheduled</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-ellipse"></div>
+    <div class="hero-fade"></div>
+  </section>
+
+
+  <!-- ══ SECTION 1: MAKE SMARTER DECISIONS ══ -->
+  <section class="section line-grid" id="features" style="background:var(--bg);position:relative;">
+    <div class="ambient" style="width:500px;height:500px;background:radial-gradient(circle,rgba(11,144,255,0.07) 0%,transparent 70%);top:-50px;right:-80px;"></div>
+    <div class="container" style="position:relative;z-index:1;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;">
+
+        <!-- Left -->
+        <div class="scroll-reveal">
+          <span class="badge" style="margin-bottom:22px;display:inline-flex;">What We Offer</span>
+          <h2 class="section-title" style="text-align:left;">
+            Make smarter decisions,<br>
+            <span style="color:var(--blue);">without spending hours</span>
+          </h2>
+          <p style="font-size:13px;color:var(--grey-light);line-height:1.85;font-weight:300;margin:18px 0 32px;max-width:400px;">
+            Centralise all your automation data in one place, track performance
+            in real-time, and get AI-powered insights that move the needle.
+          </p>
+
+          <div style="display:flex;flex-direction:column;gap:18px;margin-bottom:40px;">
+            <div class="check-item">
+              <div class="check-icon"><svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3" stroke="#0B90FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div>
+                <div style="font-size:13px;font-weight:500;margin-bottom:4px;">Centralised Workflow Hub</div>
+                <div style="font-size:12px;color:var(--grey);line-height:1.65;font-weight:300;">All your automations, analytics and integrations in one unified dashboard.</div>
+              </div>
+            </div>
+            <div class="check-item">
+              <div class="check-icon"><svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3" stroke="#0B90FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div>
+                <div style="font-size:13px;font-weight:500;margin-bottom:4px;">Real-Time Performance Monitoring</div>
+                <div style="font-size:12px;color:var(--grey);line-height:1.65;font-weight:300;">Track every metric that matters and identify bottlenecks before they become problems.</div>
+              </div>
+            </div>
+            <div class="check-item">
+              <div class="check-icon"><svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3" stroke="#0B90FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div>
+                <div style="font-size:13px;font-weight:500;margin-bottom:4px;">AI-Powered Recommendations</div>
+                <div style="font-size:12px;color:var(--grey);line-height:1.65;font-weight:300;">Intelligent suggestions to optimise workflows and maximise your ROI automatically.</div>
+              </div>
+            </div>
+            <div class="check-item">
+              <div class="check-icon"><svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3" stroke="#0B90FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div>
+                <div style="font-size:13px;font-weight:500;margin-bottom:4px;">100+ Plug-and-Play Templates</div>
+                <div style="font-size:12px;color:var(--grey);line-height:1.65;font-weight:300;">Deploy battle-tested workflows for sales, ops, content and support in minutes.</div>
+              </div>
+            </div>
+          </div>
+
+          <a href="#join" class="btn-primary">Get Access Now →</a>
+        </div>
+
+        <!-- Right: workflow panel -->
+        <div class="scroll-reveal">
+          <div style="background:var(--card);border:1px solid rgba(11,144,255,0.18);border-radius:14px;padding:24px;box-shadow:0 0 60px rgba(11,144,255,0.09),0 30px 80px rgba(0,0,0,0.6);">
+            <div style="font-size:8px;color:var(--grey);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:16px;">Active Workflows</div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="background:var(--elevated);border:1px solid rgba(11,144,255,0.12);border-radius:8px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                  <div style="font-size:11px;font-weight:500;margin-bottom:3px;">CRM Auto-Enrichment</div>
+                  <div style="font-size:9px;color:var(--grey);">n8n · OpenAI · Airtable</div>
+                </div>
+                <div style="text-align:right;">
+                  <div style="font-size:9px;color:var(--green);margin-bottom:2px;">● Active</div>
+                  <div style="font-size:8px;color:var(--grey);">847 runs today</div>
+                </div>
+              </div>
+              <div style="background:var(--elevated);border:1px solid rgba(11,144,255,0.12);border-radius:8px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                  <div style="font-size:11px;font-weight:500;margin-bottom:3px;">Content Repurposer</div>
+                  <div style="font-size:9px;color:var(--grey);">Make.com · Claude API</div>
+                </div>
+                <div style="text-align:right;">
+                  <div style="font-size:9px;color:var(--green);margin-bottom:2px;">● Active</div>
+                  <div style="font-size:8px;color:var(--grey);">124 runs today</div>
+                </div>
+              </div>
+              <div style="background:var(--elevated);border:1px solid rgba(11,144,255,0.08);border-radius:8px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                  <div style="font-size:11px;font-weight:500;margin-bottom:3px;">Invoice Auto-Generator</div>
+                  <div style="font-size:9px;color:var(--grey);">Zapier · Stripe · Notion</div>
+                </div>
+                <div style="text-align:right;">
+                  <div style="font-size:9px;color:#FF8C33;margin-bottom:2px;">● Scheduled</div>
+                  <div style="font-size:8px;color:var(--grey);">Next: 6:00 PM</div>
+                </div>
+              </div>
+
+              <!-- Bar chart -->
+              <div style="background:var(--elevated);border:1px solid rgba(11,144,255,0.07);border-radius:8px;padding:14px 16px;">
+                <div style="font-size:8px;color:var(--grey);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;">Runs This Week</div>
+                <div style="display:flex;align-items:flex-end;gap:5px;height:38px;">
+                  <div style="flex:1;background:rgba(11,144,255,0.18);border-radius:2px 2px 0 0;height:38%;"></div>
+                  <div style="flex:1;background:rgba(11,144,255,0.24);border-radius:2px 2px 0 0;height:55%;"></div>
+                  <div style="flex:1;background:rgba(11,144,255,0.32);border-radius:2px 2px 0 0;height:68%;"></div>
+                  <div style="flex:1;background:rgba(11,144,255,0.4);border-radius:2px 2px 0 0;height:60%;"></div>
+                  <div style="flex:1;background:rgba(11,144,255,0.5);border-radius:2px 2px 0 0;height:82%;"></div>
+                  <div style="flex:1;background:rgba(11,144,255,0.65);border-radius:2px 2px 0 0;height:92%;"></div>
+                  <div style="flex:1;background:var(--blue);border-radius:2px 2px 0 0;height:100%;box-shadow:0 0 10px rgba(11,144,255,0.55);"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-top:6px;">
+                  <span style="font-size:7px;color:var(--grey);">Mon</span>
+                  <span style="font-size:7px;color:var(--grey);">Tue</span>
+                  <span style="font-size:7px;color:var(--grey);">Wed</span>
+                  <span style="font-size:7px;color:var(--grey);">Thu</span>
+                  <span style="font-size:7px;color:var(--grey);">Fri</span>
+                  <span style="font-size:7px;color:var(--grey);">Sat</span>
+                  <span style="font-size:7px;color:var(--blue-bright);">Today</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══ SECTION 2: 3-STEP APPROACH ══ -->
+  <section class="section" id="approach" style="background:var(--surface);position:relative;overflow:hidden;">
+    <div class="ambient" style="width:700px;height:700px;background:radial-gradient(circle,rgba(11,144,255,0.07) 0%,transparent 70%);top:-200px;left:50%;transform:translateX(-50%);"></div>
+    <div class="container" style="position:relative;z-index:1;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start;">
+
+        <!-- Left: steps -->
+        <div class="scroll-reveal">
+          <span class="badge" style="margin-bottom:22px;display:inline-flex;">How It Works</span>
+          <h2 class="section-title" style="text-align:left;">
+            A <span style="color:var(--blue);">3-step approach</span>,<br>
+            accessible to everyone
+          </h2>
+          <p style="font-size:13px;color:var(--grey-light);line-height:1.8;font-weight:300;margin:18px 0 40px;max-width:380px;">
+            Whether you're just starting out or already running automations —
+            our approach meets you exactly where you are.
+          </p>
+
+          <div style="display:flex;flex-direction:column;gap:32px;">
+            <div class="step-item">
+              <div class="step-num">01</div>
+              <div>
+                <div style="font-size:14px;font-weight:600;margin-bottom:7px;">Connect Your Stack</div>
+                <div style="font-size:12px;color:var(--grey-light);line-height:1.75;font-weight:300;">Integrate your existing tools — CRM, email, databases, APIs. We support 100+ connectors out of the box.</div>
+              </div>
+            </div>
+            <div class="step-item">
+              <div class="step-num">02</div>
+              <div>
+                <div style="font-size:14px;font-weight:600;margin-bottom:7px;">Build & Deploy Your First Automation</div>
+                <div style="font-size:12px;color:var(--grey-light);line-height:1.75;font-weight:300;">Choose from our template library or build from scratch with our visual workflow builder. Go live in minutes.</div>
+              </div>
+            </div>
+            <div class="step-item">
+              <div class="step-num">03</div>
+              <div>
+                <div style="font-size:14px;font-weight:600;margin-bottom:7px;">Scale With Confidence</div>
+                <div style="font-size:12px;color:var(--grey-light);line-height:1.75;font-weight:300;">Monitor performance, optimise with AI insights, and grow your automation stack alongside your business.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: integration diagram -->
+        <div class="scroll-reveal" style="padding-top:64px;">
+          <div style="background:var(--card);border:1px solid rgba(11,144,255,0.14);border-radius:14px;padding:28px;box-shadow:0 30px 80px rgba(0,0,0,0.5);">
+            <div style="font-size:8px;color:var(--grey);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:18px;">Integration Map</div>
+
+            <div style="font-size:7px;color:var(--grey);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;">Your Tools</div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px;">
+              <span style="padding:5px 11px;background:rgba(11,144,255,0.07);border:1px solid rgba(11,144,255,0.14);border-radius:5px;font-size:9px;color:var(--grey-light);">Gmail</span>
+              <span style="padding:5px 11px;background:rgba(11,144,255,0.07);border:1px solid rgba(11,144,255,0.14);border-radius:5px;font-size:9px;color:var(--grey-light);">Notion</span>
+              <span style="padding:5px 11px;background:rgba(11,144,255,0.07);border:1px solid rgba(11,144,255,0.14);border-radius:5px;font-size:9px;color:var(--grey-light);">Stripe</span>
+              <span style="padding:5px 11px;background:rgba(11,144,255,0.07);border:1px solid rgba(11,144,255,0.14);border-radius:5px;font-size:9px;color:var(--grey-light);">Airtable</span>
+              <span style="padding:5px 11px;background:rgba(11,144,255,0.07);border:1px solid rgba(11,144,255,0.14);border-radius:5px;font-size:9px;color:var(--grey-light);">Slack</span>
+              <span style="padding:5px 11px;background:rgba(11,144,255,0.07);border:1px solid rgba(11,144,255,0.14);border-radius:5px;font-size:9px;color:var(--grey-light);">+95 more</span>
+            </div>
+
+            <div style="display:flex;justify-content:center;margin:6px 0;">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+                <div style="width:1px;height:18px;background:rgba(11,144,255,0.35);"></div>
+                <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="rgba(11,144,255,0.55)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+            </div>
+
+            <div style="background:rgba(11,144,255,0.1);border:1px solid rgba(11,144,255,0.3);border-radius:10px;padding:16px;text-align:center;box-shadow:0 0 30px rgba(11,144,255,0.13);margin-bottom:6px;">
+              <div style="font-size:11px;font-weight:600;color:var(--blue-bright);letter-spacing:0.08em;margin-bottom:4px;">NEXA AI Engine</div>
+              <div style="font-size:8px;color:var(--grey);">Process · Analyse · Automate</div>
+            </div>
+
+            <div style="display:flex;justify-content:center;margin:6px 0;">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+                <div style="width:1px;height:18px;background:rgba(11,144,255,0.35);"></div>
+                <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="rgba(11,144,255,0.55)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+            </div>
+
+            <div style="font-size:7px;color:var(--grey);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;">Outcomes</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div style="background:var(--elevated);border:1px solid rgba(61,253,152,0.15);border-radius:8px;padding:12px;">
+                <div style="font-size:8px;color:var(--green);margin-bottom:4px;">↑ Efficiency</div>
+                <div style="font-size:11px;font-weight:600;">+47h saved/mo</div>
+              </div>
+              <div style="background:var(--elevated);border:1px solid rgba(11,144,255,0.15);border-radius:8px;padding:12px;">
+                <div style="font-size:8px;color:var(--blue);margin-bottom:4px;">↑ Revenue</div>
+                <div style="font-size:11px;font-weight:600;">×3.2 ROI avg</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══ SECTION 3: TWO PROFILES ══ -->
+  <section class="section line-grid" id="profiles" style="background:var(--bg);position:relative;">
+    <div class="container">
+      <div style="text-align:center;margin-bottom:64px;" class="scroll-reveal">
+        <span class="badge" style="margin-bottom:16px;display:inline-flex;">Who It's For</span>
+        <h2 class="section-title">
+          Two profiles, one ambition:<br>
+          <span style="color:var(--blue);">build a scalable, automated business</span>
+        </h2>
+        <p class="section-sub">Whether you're a solo builder or a growing team, the AI Automation Society meets you where you are.</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+
+        <div class="profile-card scroll-reveal">
+          <div class="profile-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0B90FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <div style="font-size:10px;color:var(--blue);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;">The Builder</div>
+          <h3 style="font-size:1.3rem;font-weight:700;letter-spacing:-0.02em;margin-bottom:14px;line-height:1.2;">Technical founders &amp; developers</h3>
+          <p style="font-size:12.5px;color:var(--grey-light);line-height:1.8;font-weight:300;margin-bottom:28px;">
+            You know your stack. You want powerful primitives, deep API access, and
+            the flexibility to build exactly what you need — without fighting your tools.
+          </p>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:32px;">
+            <div class="bullet-item"><div class="bullet-dot"></div>Custom workflow builder with full API access</div>
+            <div class="bullet-item"><div class="bullet-dot"></div>n8n, Make.com &amp; LangChain integration</div>
+            <div class="bullet-item"><div class="bullet-dot"></div>Production-grade monitoring &amp; logging</div>
+          </div>
+          <a href="#join" class="btn-outline" style="font-size:11px;">Start Building →</a>
+        </div>
+
+        <div class="profile-card featured scroll-reveal">
+          <div class="profile-icon featured">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0B90FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div style="font-size:10px;color:var(--blue);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;">The Operator</div>
+          <h3 style="font-size:1.3rem;font-weight:700;letter-spacing:-0.02em;margin-bottom:14px;line-height:1.2;">Business owners &amp; operators</h3>
+          <p style="font-size:12.5px;color:var(--grey-light);line-height:1.8;font-weight:300;margin-bottom:28px;">
+            You don't need to code. You need results. Our no-code templates and
+            guided setup let you automate critical business processes in an afternoon.
+          </p>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:32px;">
+            <div class="bullet-item"><div class="bullet-dot"></div>100+ no-code templates, ready to deploy</div>
+            <div class="bullet-item"><div class="bullet-dot"></div>Guided setup with community support</div>
+            <div class="bullet-item"><div class="bullet-dot"></div>Clear ROI tracking from day one</div>
+          </div>
+          <a href="#join" class="btn-primary" style="font-size:11px;">Get Templates →</a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══ SECTION 4: PERSON / TESTIMONIAL ══ -->
+  <section class="section" id="community" style="background:var(--surface);position:relative;overflow:hidden;">
+    <div class="ambient" style="width:700px;height:700px;background:radial-gradient(circle,rgba(11,144,255,0.07) 0%,transparent 70%);top:-150px;right:-200px;"></div>
+    <div class="container" style="position:relative;z-index:1;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;">
+
+        <!-- Photo -->
+        <div class="scroll-reveal" style="position:relative;">
+          <div style="border-radius:16px;overflow:hidden;position:relative;">
+            <img src="https://placehold.co/520x600/0D1424/1AADFF?text=Community+Member" alt="Community Member" style="width:100%;display:block;border-radius:16px;">
+            <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(4,7,14,0.75) 0%,transparent 55%);border-radius:16px;"></div>
+            <div style="position:absolute;bottom:24px;left:24px;">
+              <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Jordan K.</div>
+              <div style="font-size:11px;color:rgba(168,176,196,0.8);letter-spacing:0.05em;">Founder, ScaleOps Agency</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quote -->
+        <div class="scroll-reveal">
+          <span class="badge" style="margin-bottom:22px;display:inline-flex;">Community Spotlight</span>
+          <h2 style="font-size:clamp(1.6rem,3vw,2.3rem);font-weight:700;letter-spacing:-0.03em;line-height:1.2;margin-bottom:22px;">
+            At the heart of the<br>
+            <span style="color:var(--blue);text-shadow:0 0 40px rgba(11,144,255,0.5);">AI automation ecosystem</span>
+          </h2>
+          <p style="font-size:13px;color:var(--grey-light);line-height:1.85;font-weight:300;margin-bottom:24px;">
+            "When I joined the AI Automation Society, I was manually handling 80% of my agency's operations.
+            Within 90 days, I'd automated everything from lead qualification to invoice
+            generation. My team now focuses entirely on strategy and client work."
+          </p>
+          <p style="font-size:13px;color:var(--grey-light);line-height:1.85;font-weight:300;margin-bottom:36px;">
+            The community didn't just give me templates — it gave me a
+            <span style="color:var(--blue-bright);font-weight:500;">complete framework for building a scalable, automated business</span>
+            that runs even when I'm not there.
+          </p>
+          <a href="#join" class="btn-primary">Join the Community →</a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══ SECTION 5: STATS ══ -->
+  <section class="section" style="background:var(--bg);position:relative;overflow:hidden;">
+    <div class="ambient" style="width:900px;height:400px;background:radial-gradient(ellipse,rgba(11,144,255,0.09) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+    <div class="container" style="position:relative;z-index:1;">
+      <div style="text-align:center;margin-bottom:64px;" class="scroll-reveal">
+        <span class="badge" style="margin-bottom:16px;display:inline-flex;">By the Numbers</span>
+        <h2 class="section-title">
+          Clearer decisions.<br>
+          <span style="color:var(--blue);">Better-controlled revenue.</span>
+        </h2>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(11,144,255,0.07);border:1px solid rgba(11,144,255,0.07);border-radius:16px;overflow:hidden;">
+        <div class="scroll-reveal" style="background:var(--bg);padding:52px 28px;text-align:center;">
+          <div class="stat-big">+50%</div>
+          <div style="font-size:10px;color:var(--grey);letter-spacing:0.12em;text-transform:uppercase;margin-top:14px;line-height:1.5;">Average time<br>saved per month</div>
+        </div>
+        <div class="scroll-reveal" style="background:var(--bg);padding:52px 28px;text-align:center;">
+          <div class="stat-big">4.2K</div>
+          <div style="font-size:10px;color:var(--grey);letter-spacing:0.12em;text-transform:uppercase;margin-top:14px;line-height:1.5;">Society<br>members</div>
+        </div>
+        <div class="scroll-reveal" style="background:var(--bg);padding:52px 28px;text-align:center;">
+          <div class="stat-big">×3.2</div>
+          <div style="font-size:10px;color:var(--grey);letter-spacing:0.12em;text-transform:uppercase;margin-top:14px;line-height:1.5;">Average ROI<br>on automations</div>
+        </div>
+        <div class="scroll-reveal" style="background:var(--bg);padding:52px 28px;text-align:center;">
+          <div class="stat-big">100+</div>
+          <div style="font-size:10px;color:var(--grey);letter-spacing:0.12em;text-transform:uppercase;margin-top:14px;line-height:1.5;">Ready-to-deploy<br>templates</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══ SECTION 6: FAQ ══ -->
+  <section class="section line-grid" id="faq" style="background:var(--surface);position:relative;">
+    <div class="container">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start;">
+
+        <!-- Left CTA copy -->
+        <div class="scroll-reveal">
+          <span class="badge" style="margin-bottom:22px;display:inline-flex;">FAQ</span>
+          <h2 class="section-title" style="text-align:left;">
+            You're one step from<br>
+            <span style="color:var(--blue);">building the right systems</span>
+          </h2>
+          <p style="font-size:13px;color:var(--grey-light);line-height:1.8;font-weight:300;margin:18px 0 36px;max-width:360px;">
+            Join thousands of operators and builders in the AI Automation Society
+            who've already automated their most critical workflows.
+          </p>
+          <a href="#join" class="btn-primary">Get Started Free →</a>
+          <p style="font-size:11px;color:var(--grey);margin-top:14px;letter-spacing:0.04em;">No credit card required</p>
+        </div>
+
+        <!-- Right FAQ -->
+        <div class="scroll-reveal">
+          <div class="faq-item open">
+            <div class="faq-q" onclick="toggleFaq(this.parentElement)">
+              <span>Is NEXA free to join?</span>
+              <div class="faq-toggle"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            </div>
+            <div class="faq-a">Yes — the community and core resources are completely free. We also offer premium tiers for advanced templates, private mentorship, and dedicated tooling. Start free and upgrade when you're ready.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this.parentElement)">
+              <span>Do I need coding experience?</span>
+              <div class="faq-toggle"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            </div>
+            <div class="faq-a">Not at all. Our no-code templates and guided resources are built for non-technical founders and operators. If you can use a spreadsheet, you can automate with NEXA.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this.parentElement)">
+              <span>What tools does NEXA support?</span>
+              <div class="faq-toggle"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            </div>
+            <div class="faq-a">We cover 100+ tools including n8n, Make.com, Zapier, OpenAI, Claude, Airtable, Notion, Slack, Stripe, HubSpot, and many more. New integrations are added by the community weekly.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this.parentElement)">
+              <span>How active is the community?</span>
+              <div class="faq-toggle"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            </div>
+            <div class="faq-a">Very active. With 4,200+ members across 30+ countries, our Discord runs 24/7. We host weekly live workshops, monthly expert AMAs, and quarterly showcase events for members to share their work.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this.parentElement)">
+              <span>How quickly can I see results?</span>
+              <div class="faq-toggle"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v8M1 5h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            </div>
+            <div class="faq-a">Most members deploy their first working automation within 48 hours. Many report saving 10+ hours per week within their first month. Your results will depend on your stack and goals, but we make it as fast as possible.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══ BOTTOM CTA ══ -->
+  <section class="section" id="join" style="background:var(--bg);position:relative;overflow:hidden;">
+    <div class="ambient" style="width:1000px;height:500px;background:radial-gradient(ellipse,rgba(11,144,255,0.11) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+    <div class="container" style="position:relative;z-index:1;text-align:center;">
+      <div class="scroll-reveal">
+        <span class="badge" style="margin-bottom:26px;display:inline-flex;"><span class="badge-dot"></span>Free · No Credit Card Required</span>
+        <h2 style="font-size:clamp(2.2rem,5vw,3.8rem);font-weight:700;letter-spacing:-0.03em;line-height:1.1;margin-bottom:20px;">
+          Build the <span style="color:var(--blue);text-shadow:0 0 60px rgba(11,144,255,0.55);">right systems</span><br>
+          for your ambitions
+        </h2>
+        <p style="font-size:14px;color:var(--grey-light);max-width:440px;margin:0 auto 44px;line-height:1.8;font-weight:300;">
+          Join the AI Automation Society today and start automating the work
+          that's holding your business back.
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-bottom:22px;">
+          <a href="#" class="btn-primary" style="font-size:13px;padding:14px 36px;">
+            Join for Free
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a href="#features" class="btn-outline" style="font-size:13px;padding:14px 36px;">Explore Templates</a>
+        </div>
+        <p style="font-size:10px;color:var(--grey);letter-spacing:0.1em;text-transform:uppercase;">4,200+ Society Members · 100+ Templates · Growing Daily</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══ FOOTER ══ -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+            <img src="brand_assets/NEXA (3).png" alt="NEXA" style="height:30px;filter:drop-shadow(0 0 12px rgba(11,144,255,0.9)) drop-shadow(0 0 24px rgba(11,144,255,0.45)) drop-shadow(0 0 3px rgba(255,255,255,0.6)) brightness(1.05);">
+            <span style="font-size:9px;color:var(--grey);letter-spacing:0.14em;text-transform:uppercase;padding-left:12px;border-left:1px solid rgba(11,144,255,0.18);line-height:1.4;">AI Automation<br>Society</span>
+          </div>
+          <p style="font-size:12px;color:var(--grey);max-width:240px;line-height:1.8;font-weight:300;margin-bottom:16px;">
+            The AI Automation Society — a strategic community for builders and operators automating their way to the top.
+          </p>
+          <p style="font-size:11px;color:rgba(123,130,153,0.55);letter-spacing:0.06em;font-style:italic;">Building the systems of tomorrow</p>
+        </div>
+        <div>
+          <div class="footer-col-title">Product</div>
+          <div class="footer-links">
+            <a href="#">Features</a>
+            <a href="#">Templates</a>
+            <a href="#">Integrations</a>
+            <a href="#">Pricing</a>
+          </div>
+        </div>
+        <div>
+          <div class="footer-col-title">Community</div>
+          <div class="footer-links">
+            <a href="#">Discord</a>
+            <a href="#">Events</a>
+            <a href="#">Showcase</a>
+            <a href="#">Newsletter</a>
+          </div>
+        </div>
+        <div>
+          <div class="footer-col-title">Company</div>
+          <div class="footer-links">
+            <a href="#">About</a>
+            <a href="#">Blog</a>
+            <a href="#">Privacy</a>
+            <a href="#">Terms</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-top:28px;">
+        <p style="font-size:11px;color:var(--grey);letter-spacing:0.04em;">© 2026 NEXA · AI Automation Society. All rights reserved.</p>
+        <p style="font-size:11px;color:rgba(123,130,153,0.5);letter-spacing:0.04em;">Powered by <span style="color:var(--blue);">NEXA</span></p>
+      </div>
+    </div>
+  </footer>
+
+
+  <script>
+    // ── Hero Wavy Background ──
+    (function initWavyBg() {
+      var canvas = document.getElementById('hero-wave-canvas');
+      if (!canvas) return;
+      var hero = document.getElementById('hero');
+      var ctx = canvas.getContext('2d');
+
+      var speed      = 0.0012;
+      var waveColors = ['#0B90FF', '#1AADFF', '#0B55CC', '#38bdf8', '#22d3ee'];
+      var waveAlphas = [0.28, 0.22, 0.16, 0.12, 0.09];
+      var waveWidths = [2.5,  2.0,  1.5,  1.5,  1.0 ];
+
+      var simplex = new SimplexNoise();
+      var w, h, nt = 0, animId;
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      function resize() {
+        w = hero.offsetWidth  || window.innerWidth;
+        h = hero.offsetHeight || window.innerHeight;
+        canvas.width        = Math.round(w * dpr);
+        canvas.height       = Math.round(h * dpr);
+        canvas.style.width  = w + 'px';
+        canvas.style.height = h + 'px';
+        ctx.scale(dpr, dpr);
+      }
+
+      function drawWave(n) {
+        nt += speed;
+        for (var i = 0; i < n; i++) {
+          ctx.beginPath();
+          ctx.lineWidth   = waveWidths[i];
+          ctx.globalAlpha = waveAlphas[i];
+          ctx.strokeStyle = waveColors[i % waveColors.length];
+          for (var x = 0; x <= w; x += 3) {
+            var y = simplex.noise3D(x / 700, 0.38 * i, nt) * 85;
+            ctx.lineTo(x, y + h * 0.5);
+          }
+          ctx.stroke();
+          ctx.closePath();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      function render() {
+        ctx.clearRect(0, 0, w, h);
+        drawWave(5);
+        animId = requestAnimationFrame(render);
+      }
+
+      window.addEventListener('resize', resize);
+      resize();
+      render();
+    })();
+
+    function toggleFaq(item) { item.classList.toggle('open'); }
+
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const d = parseFloat(e.target.dataset.delay || '0');
+          setTimeout(() => e.target.classList.add('visible'), d);
+          obs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.05, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.scroll-reveal').forEach((el, i) => {
+      el.dataset.delay = (i % 3) * 110;
+      obs.observe(el);
+    });
+
+    // Fallback for screenshots
+    setTimeout(() => {
+      document.querySelectorAll('.scroll-reveal:not(.visible)').forEach(el => el.classList.add('visible'));
+    }, 1500);
+  </script>
+
+</body>
+</html>
